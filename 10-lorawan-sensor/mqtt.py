@@ -1,11 +1,12 @@
 import paho.mqtt.client as mqtt
 
 # Condifugure as needed
-USERNAME="your-application-id@ttn"
-API_KEY="your-application-API-key"
+USERNAME="2023riot@ttn"
+API_KEY="NNSXS.3VGLGALDFHGZL4YV4XPVQWKCZ54QCSUKXWRF7SA.MCASVKF5OHE2ZMLW7MQ2X3HHINOVF3NWIUEWV76BKPUMGFV3AG2A"
 
 # Subscribe to the uplink topic of all devices
-TOPIC = f"v3/{USERNAME}/devices/+/up"
+# TOPIC = f"v3/2023riot/devices/+/up"
+TOPIC = '#'
 
 # Address of TTN MQTT server
 TTN_MQTT_SERVER = "eu1.cloud.thethings.network"

@@ -41,7 +41,7 @@ of this exercise do not use any context, set `context=0` if required by the func
 2. Set the LoRaWAN keys using [`gnrc_netapi_set`](https://doc.riot-os.org/group__net__gnrc__netapi.html#ga88f71db0621dc9ce78d14664f5e23f4b). Use the following netopts:
 
 
-- `NETOPT_LORAWAN_ADDRESS_LONG`
+- `NETOPT_ADDRESS_LONG`
 - `NETOPT_LORAWAN_APPEUI`
 - `NETOPT_LORAWAN_APPKEY`
 

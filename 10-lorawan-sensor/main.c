@@ -44,11 +44,11 @@
 #define JOIN_DELAY      (10U * MS_PER_SEC)
 
 /* LoRaWAN data rate */
-#define LORAWAN_DATARATE    LORAMAC_DR_5
+#define LORAWAN_DATARATE    LORAMAC_DR_3
 
 /* Delay between transmission in milliseconds */
 /* [TASK 3: Find suitable value for transmission interval ] */
-#define TRANSMISSION_INTERVAL           (0U * MS_PER_SEC)
+#define TRANSMISSION_INTERVAL           16000
 
 /* Forward declaration of send function */
 static void send(event_t *event);
@@ -63,9 +63,9 @@ static gnrc_netif_t *lorawan_netif;
 static uint8_t counter;
 
 /* [TASK 2: Set the DevEUI, AppEUI and AppKey] */
-char deveui_str[] = "AAAAAAAAAAAAAAAA";
-char appeui_str[] = "BBBBBBBBBBBBBBBB";
-char appkey_str[] = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
+char deveui_str[] = "70B3D57ED005BEC5";
+char appeui_str[] = "DDB4EE4E1A0D83F8";
+char appkey_str[] = "21197433CD04D7BF443E66FF45373F10";
 
 /* Button callback */
 static void button_callback(void *arg)
@@ -86,13 +86,14 @@ static void send(event_t *event)
 
     /* [TASK 3: Allocate a packet snip for the counter data] */
     /* pkt = ... */
-
+    pkt = gnrc_pktbuf_add(NULL, &counter, sizeof(counter), GNRC_NETTYPE_UNDEF);
     /* [TASK 3: Build GNRC Netif Header snip and prepend to packet] */
     /* hdr = gnrc_netif_hdr_build(...); */
     /* pkt = gnrc_pkt_prepend(...) */
-
+    hdr = gnrc_netif_hdr_build(NULL, 0, &port, sizeof(port));
+    pkt = gnrc_pkt_prepend(pkt, hdr);
     /* [TASK 3: Send packet using GNRC NetAPI] */
-
+    gnrc_netapi_send(lorawan_netif->pid, pkt);
     puts("Successfully sent packet");
 
     /* Wait for some time (to comply with duty cycle) and schedule transmission
@@ -114,36 +115,37 @@ static void _activate(gnrc_netif_t *netif)
     /* The key_holder variable holds at this point the AppEUI (`size` bytes) */
 
     /* [TASK 2: Set the AppEUI using GNRC NetAPI] */
-
+    gnrc_netapi_set(netif->pid, NETOPT_LORAWAN_APPEUI, 0, key_holder, size);
     size = fmt_hex_bytes(key_holder, appkey_str);
     /* The key_holder variable holds at this point the AppKey (`size` bytes) */
 
     /* [TASK 2: Set the AppKey using GNRC NetAPI] */
-
+    gnrc_netapi_set(netif->pid, NETOPT_LORAWAN_APPKEY, 0, key_holder, size);
     size = fmt_hex_bytes(key_holder, deveui_str);
     /* The key_holder variable holds at this point the DevEUI (`size` bytes) */
 
     /* [TASK 2: Set the DevEUI using GNRC NetAPI] */
-
+    gnrc_netapi_set(netif->pid, NETOPT_ADDRESS_LONG, 0, key_holder, size);
     netopt_enable_t en = NETOPT_ENABLE;
     /* [TASK 2: Enable OTAA activation] */
-
+    gnrc_netapi_set(netif->pid, NETOPT_OTAA, 0, &en, sizeof(en));
     en = NETOPT_DISABLE;
     /* [TASK 2: Disable confirmed transmissions] */
-
+    gnrc_netapi_set(netif->pid, NETOPT_ACK_REQ, 0, &en, sizeof(en));
     uint8_t dr = LORAWAN_DATARATE;
     /* [TASK 2: Set Datarate] */
+    gnrc_netapi_set(netif->pid, NETOPT_LORAWAN_DR, 0, &dr, sizeof(dr));
 
     while(true) {
         en = NETOPT_ENABLE;
         /* [TASK 2: Use GNRC NetAPI to set the NETOPT_LINK netopt] */
-
+        gnrc_netapi_set(netif->pid, NETOPT_LINK, 0, &en, sizeof(en));
         /* Wait for some seconds and ask the interface if it joined properly */
         ztimer_sleep(ZTIMER_MSEC, JOIN_DELAY);
 
         /* [TASK 2: Get the activation status into the `en` variable using GNRC
          * NetAPI with the NETOPT_LINK netopt] */
-
+        gnrc_netapi_get(netif->pid, NETOPT_LINK, 0, &en, sizeof(en));
         if (en == NETOPT_ENABLE) {
             puts("Device joined");
             break;
@@ -155,9 +157,16 @@ static void _activate(gnrc_netif_t *netif)
 gnrc_netif_t *get_lorawan_netif(void)
 {
     /* [TASK 1: Use gnrc_netif_iter to iterate all network interface] */
-    for (/* initial condition */; /* exit condition */; /* increment */) {
-
+    uint16_t devType = 0;
+    for (gnrc_netif_t* iter = NULL; gnrc_netif_iter(iter) != NULL;) {
+        iter = gnrc_netif_iter(iter);
         /* [TASK 1: Get device type and return netif if type is NETDEV_TYPE_LORA] */
+        gnrc_netapi_get(iter->pid, NETOPT_DEVICE_TYPE, 0, &devType, sizeof(devType));
+        if (devType == NETDEV_TYPE_LORA)
+        {
+            puts("Identified");
+            return iter;
+        }
     }
 
     /* Shouldn't happen in this exercise */

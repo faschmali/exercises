@@ -5,7 +5,7 @@ APPLICATION = lorawan_sensor
 DEVELHELP ?= 1
 
 # If no BOARD is found in the environment, use this default:
-BOARD ?= b-l072z-lrwan1
+BOARD ?= nucleo-l152re
 
 ifdef DBG_ID_LW
   DEBUG_ADAPTER_ID=$(DBG_ID_COAP)
